@@ -4,10 +4,10 @@ const app = express();
 const PORT = 3000;
 
 app.get("/", (req, res) => {
-  res.send("Runnings!");
+  res.send("Runnings 2!");
 });
 
-app.get("/user", (req, res) => {
+app.get("/users", (req, res) => {
   res.send("User Runnings!");
 });
 
