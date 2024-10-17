@@ -1,0 +1,6 @@
+{
+    "host": "soccer-db.cd440mq0u0x5.eu-central-1.rds.amazonaws.com",
+    "user": "admin",
+    "database": "soccerdb",
+    "password": "soccer123"
+  }
