@@ -143,7 +143,7 @@ exports.ForgetPasswordEmailVerification = async(req, res) => {
 
         await db.mysqlQuery(forgetCodeInsertQuery, [userId, code, code]);
 
-        return res.status(200).json({ success: true, message: "Reset code sent" });
+        return res.status(200).json({ success: true, message: "Reset code sent", code:code });
    
 
     } catch (error) {
@@ -220,7 +220,7 @@ exports.ResendVerifyForgetPassword = async (req, res) => {
 
         await db.mysqlQuery(upsertCodeQuery, [userId, userId, newCode]);
 
-        return res.status(200).json({ success: true, message: "New code has been sent." });
+        return res.status(200).json({ success: true, message: "New code has been sent.", code:newCode });
 
     } catch (error) {
         console.error("ResendVerifyForgetPassword error:", error);
