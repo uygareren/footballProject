@@ -1,6 +1,6 @@
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
-const { createToken } = require('../utils/jwt');
+const { createToken, decodeToken } = require('../utils/jwt');
 const db = require("../config/database");
 const crypto = require("crypto");
 
@@ -28,7 +28,7 @@ exports.Register = async (req, res) => {
 
         const insertQuery = `
             INSERT INTO user (name, surname, email, phone, password, authToken, createdAt, updatedAt, activeAccount)
-            VALUES (?, ?, ?, ?, ?, unhex(replace(?, '-', '')), NOW(), NOW(), 0)
+            VALUES (?, ?, ?, ?, ?, ?, NOW(), NOW(), 0)
         `;
         await db.mysqlQuery(insertQuery, [name, surname, email, phone, hashedPassword, authToken]);
 
@@ -280,13 +280,15 @@ exports.Login = async(req, res) => {
 
         const updateQuery = `
             UPDATE user 
-            SET authToken = unhex(replace( ? ,'-','')), 
+            SET authToken = ?, 
                 loginDate = CURRENT_TIMESTAMP() 
             WHERE id = ?
             LIMIT 1
         `;
 
         await db.mysqlQuery(updateQuery, [authToken, user.id]); 
+
+        console.log("authtoknetype", typeof authToken)
 
         const jwt = createToken(authToken);
         res.status(200).json({ success: true, jwt });
@@ -297,3 +299,60 @@ exports.Login = async(req, res) => {
         return res.status(500).json({ success: false, message: "Sunucu hatası. Tekrar deneyin." });
     }
 }
+
+exports.loginWithToken = async (req, res) => {
+    const tokenHeader = req.headers["authorization"];
+    
+    if (!tokenHeader || tokenHeader === 'null' || tokenHeader == null) {
+        return res.status(401).send();
+    }
+
+    let jwt = tokenHeader.replace("Bearer ", "");
+    console.log("jwt", jwt);
+
+    if (jwt === "") {
+        return res.status(401).send();
+    }
+
+    let authToken = decodeToken(jwt);
+    if (!authToken) {
+        return res.status(401).send();
+    }
+
+    try {
+        console.log('Auth Token:', authToken); // Debugging line
+        console.log('Auth Token:', authToken); // Debugging line
+
+        // Correctly handle authToken as a hex value for the query
+        const userQuery = `SELECT * FROM user WHERE authToken = ? AND activeAccount = 1 LIMIT 1`;
+        const [user] = await db.mysqlQuery(userQuery, [authToken]); // Pass authToken as parameter
+
+        console.log('User Query Result:', user); // Debugging line
+
+        if (user == undefined) {
+            return res.status(401).json({ success: false, message: 'Invalid token' });
+        }
+
+        const updateAccountQuery = 'UPDATE user SET loginDate = CURRENT_TIMESTAMP(), isOnline = 1 WHERE id = ?';
+        await db.mysqlQuery(updateAccountQuery, [user.id]);
+
+        const userInfo = {
+            id: user.id,
+            name: user.name,
+            surname: user.surname,
+            email: user.email,
+        };
+
+        res.status(200).json({ success: true, message: 'Login successful', userInfo, jwt });
+
+    } catch (error) {
+        console.error('Internal server error:', error.message);
+        return res.status(500).json({ success: false, message: 'Internal server error' });
+    }
+};
+
+
+
+
+
+

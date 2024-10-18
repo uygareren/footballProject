@@ -67,6 +67,7 @@ router.post('/register-verify', validate(registerVerifyValidation), AuthControll
 router.post('/register-resend-verify', validate(registerResendVerifyValidation), AuthController.ResendVeriyRegisterCode);
 
 router.post('/login', validate(loginValidation), AuthController.Login);
+router.post('/login-with-token', AuthController.loginWithToken);
 
 router.post('/forget-password-email-verification', validate(ForgetPasswordEmailVerification), AuthController.ForgetPasswordEmailVerification);
 router.post('/forget-password-verify', validate(forgetPasswordVerifyValidation), AuthController.VerifyForgetPassword);
