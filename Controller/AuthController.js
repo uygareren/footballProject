@@ -48,7 +48,8 @@ exports.Register = async (req, res) => {
         return res.status(200).json({
             success: true,
             message: "Kayıt başarılı.",
-            
+            code:code,
+            userId:newUserResult[0].id
         });
 
     } catch (error) {

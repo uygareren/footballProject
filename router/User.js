@@ -8,4 +8,8 @@ const router = express.Router();
 
 router.put('/update-profile', AuthMiddleware(), UserController.UpdateProfile);
 
+router.post('/follow', AuthMiddleware(), UserController.PostFollow);
+router.get('/requests', AuthMiddleware(), UserController.GetFollowRequest);
+router.post('/request-action', AuthMiddleware(), UserController.PostFollowRequestAction);
+
 module.exports = router;    
