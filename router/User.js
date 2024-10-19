@@ -16,4 +16,6 @@ router.post('/block', AuthMiddleware(), UserController.PostBlockUser);
 router.delete('/unblock', AuthMiddleware(), UserController.PostUnBlockUser);
 router.get('/blocked-users', AuthMiddleware(), UserController.GetBlockedUsers);
 
+router.get('/user', AuthMiddleware(), UserController.GetUserDetail);
+
 module.exports = router;    

@@ -249,26 +249,67 @@ exports.GetBlockedUsers = async(req, res) => {
     }
 }
 
-
 // NOT DONE
-exports.GetUserDetail = async(req, res) => {
+exports.GetUserDetail = async (req, res) => {
     const userId = req.accountID;
-    const {targetUserId} = req.body;
+    const { targetUserId } = req.body;
 
     try {
+        const userDetailQuery = `
+            SELECT 
+                u.id, u.name, u.surname, u.imageUrl, u.isPrivate,
+                (SELECT COUNT(*) FROM follow WHERE followerId = ?) AS followingCount,
+                (SELECT COUNT(*) FROM follow WHERE followingId = ?) AS followerCount,
+                (SELECT COUNT(*) FROM follow WHERE followerId = ? AND followingId = ?) AS isFollowing,
+                (SELECT COUNT(*) FROM block WHERE userId = ? AND blockedUserId = ?) AS hasBlockedTarget,
+                (SELECT COUNT(*) FROM block WHERE userId = ? AND blockedUserId = ?) AS targetBlockedUser
+            FROM user u
+            WHERE u.id = ?
+        `;
+        const [userDetails] = await db.mysqlQuery(userDetailQuery, [targetUserId, targetUserId, userId, targetUserId, userId, targetUserId, targetUserId, userId, targetUserId]);
 
-        if(userId == targetUserId){
-            
-        }else{
-
+        if (!userDetails) {
+            return res.status(404).json({ success: false, message: 'User not found.' });
         }
-        
+
+        const hasBlockedTarget = userDetails.hasBlockedTarget > 0;
+        const targetBlockedUser = userDetails.targetBlockedUser > 0;
+
+        if (hasBlockedTarget || targetBlockedUser) {
+            return res.status(200).json({
+                success: true,
+                blockStatus: true,
+                message: 'User has been blocked by either party.'
+            });
+        }
+
+        const isFollowing = userDetails.isFollowing > 0;
+
+        let isShown = true;
+        if (userDetails.isPrivate === 1 && !isFollowing) {
+            isShown = false; 
+        }
+
+        const response = {
+            id: userDetails.id,
+            name: userDetails.name, 
+            surname: userDetails.surname, 
+            imageUrl: userDetails.imageUrl, 
+            followerCount: userDetails.followerCount, 
+            followingCount: userDetails.followingCount, 
+            isFollowing: isFollowing, 
+            isShown: isShown, 
+            blockStatus: false 
+        };
+
+        return res.status(200).json({ success: true, data: response });
+
     } catch (error) {
-        console.error('Follow request action error:', error.message);
+        console.error('Get user detail action error:', error.message);
         return res.status(500).json({ success: false, message: 'Internal server error.' });
     }
+};
 
-}
 
 
 
