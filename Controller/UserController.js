@@ -163,6 +163,113 @@ exports.PostFollowRequestAction = async (req, res) => {
     }
 };
 
+exports.PostBlockUser = async (req, res) => {
+    const userId = req.accountID;
+    const { targetUserId } = req.body;
+
+    try {
+        await db.mysqlQuery('START TRANSACTION');
+
+        const blockQuery = `
+            INSERT INTO block (userId, blockedUserId, createdAt)
+            SELECT ?, ?, CURRENT_TIMESTAMP
+            FROM DUAL
+            WHERE NOT EXISTS (
+                SELECT 1 FROM block WHERE userId = ? AND blockedUserId = ?
+            )
+        `;
+        const blockResult = await db.mysqlQuery(blockQuery, [userId, targetUserId, userId, targetUserId]);
+
+        if (blockResult.affectedRows > 0) {
+            const deleteFollowQuery = `
+                DELETE FROM follow 
+                WHERE (followerId = ? AND followingId = ?)
+                   OR (followerId = ? AND followingId = ?)
+            `;
+            await db.mysqlQuery(deleteFollowQuery, [userId, targetUserId, targetUserId, userId]);
+
+            await db.mysqlQuery('COMMIT'); 
+
+            return res.status(200).json({ success: true, message: 'User blocked successfully, and follow relationship removed.' });
+        } else {
+            await db.mysqlQuery('ROLLBACK'); 
+            return res.status(400).json({ success: false, message: 'User is already blocked.' });
+        }
+
+    } catch (error) {
+        await db.mysqlQuery('ROLLBACK'); 
+        console.error('Block request action error:', error.message);
+        return res.status(500).json({ success: false, message: 'Internal server error.' });
+    }
+};
+
+
+exports.PostUnBlockUser = async (req, res) => {
+    const userId = req.accountID;
+    const { targetUserId } = req.body;
+
+    try {
+        // Delete the block entry if it exists
+        const deleteQuery = `
+            DELETE FROM block 
+            WHERE userId = ? AND blockedUserId = ?
+            LIMIT 1
+        `;
+        const deleteResult = await db.mysqlQuery(deleteQuery, [userId, targetUserId]);
+
+        if (deleteResult.affectedRows > 0) {
+            return res.status(200).json({ success: true, message: 'Unblock successful!' });
+        } else {
+            return res.status(400).json({ success: false, message: 'User is not blocked or already unblocked.' });
+        }
+
+    } catch (error) {
+        console.error('Unblock request action error:', error.message);
+        return res.status(500).json({ success: false, message: 'Internal server error.' });
+    }
+};
+
+exports.GetBlockedUsers = async(req, res) => {
+    const userId = req.accountID;
+
+    try {
+        const blockUserQuery = `
+            SELECT u.id as userId, u.name, u.surname, u.email, u.imageUrl, bl.createdAt
+            FROM block bl
+            JOIN user u ON bl.blockedUserId = u.id
+            WHERE bl.userId = ?
+        `
+        const blockUsersResult = await db.mysqlQuery(blockUserQuery, [userId])
+
+        return res.status(200).json({success:true, blockedUsers: blockUsersResult});
+
+    } catch (error) {
+        console.error('Unblock request action error:', error.message);
+        return res.status(500).json({ success: false, message: 'Internal server error.' });
+    }
+}
+
+
+// NOT DONE
+exports.GetUserDetail = async(req, res) => {
+    const userId = req.accountID;
+    const {targetUserId} = req.body;
+
+    try {
+
+        if(userId == targetUserId){
+            
+        }else{
+
+        }
+        
+    } catch (error) {
+        console.error('Follow request action error:', error.message);
+        return res.status(500).json({ success: false, message: 'Internal server error.' });
+    }
+
+}
+
 
 
 

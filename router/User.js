@@ -12,4 +12,8 @@ router.post('/follow', AuthMiddleware(), UserController.PostFollow);
 router.get('/requests', AuthMiddleware(), UserController.GetFollowRequest);
 router.post('/request-action', AuthMiddleware(), UserController.PostFollowRequestAction);
 
+router.post('/block', AuthMiddleware(), UserController.PostBlockUser);
+router.delete('/unblock', AuthMiddleware(), UserController.PostUnBlockUser);
+router.get('/blocked-users', AuthMiddleware(), UserController.GetBlockedUsers);
+
 module.exports = router;    
