@@ -1,6 +1,7 @@
 const express = require("express");
 const { Joi, validate } = require('express-validation');
 const AuthController = require("../Controller/AuthController"); // Adjust the path as needed
+const {AuthMiddleware} = require("../middleware/AuthMiddleware");
 
 const registerValidation = {
     body: Joi.object({
@@ -73,5 +74,7 @@ router.post('/forget-password-email-verification', validate(ForgetPasswordEmailV
 router.post('/forget-password-verify', validate(forgetPasswordVerifyValidation), AuthController.VerifyForgetPassword);
 router.post('/forget-password-resend-verify', validate(forgetPasswordResendVerifyValidation), AuthController.ResendVerifyForgetPassword);
 router.post('/forget-password-reset-password', validate(forgetPasswordResetPasswordValidation), AuthController.ForgetPasswordResetPassword);
+
+router.put('/password-update', AuthMiddleware(), AuthController.PasswordUpdate);
 
 module.exports = router;    

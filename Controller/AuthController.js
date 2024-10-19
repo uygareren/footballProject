@@ -251,8 +251,6 @@ exports.ForgetPasswordResetPassword = async (req, res) => {
     }
 };
 
-
-
 exports.Login = async(req, res) => {
     const {email, password} = req.body;
 
@@ -345,6 +343,43 @@ exports.loginWithToken = async (req, res) => {
         };
 
         res.status(200).json({ success: true, message: 'Login successful', userInfo, jwt });
+
+    } catch (error) {
+        console.error('Internal server error:', error.message);
+        return res.status(500).json({ success: false, message: 'Internal server error' });
+    }
+};
+
+exports.PasswordUpdate = async (req, res) => {
+    const userId = req.accountID;
+    const { newPassword } = req.body;
+
+    try {
+        const passwordQuery = `
+            SELECT password FROM user WHERE id = ? LIMIT 1
+        `;
+        const passwordResult = await db.mysqlQuery(passwordQuery, [userId]);
+
+        if (!passwordResult.length) {
+            return res.status(404).json({ success: false, message: 'User not found.' });
+        }
+
+        const currentPasswordHash = passwordResult[0].password;
+
+        const isSamePassword = await bcrypt.compare(newPassword, currentPasswordHash);
+
+        if (isSamePassword) {
+            return res.status(400).json({ success: false, message: 'New password cannot be the same as the old password.' });
+        }
+
+        const hashedPassword = await bcrypt.hash(newPassword, 10); 
+
+        const updateQuery = `
+            UPDATE user SET password = ? WHERE id = ?
+        `;
+        await db.mysqlQuery(updateQuery, [hashedPassword, userId]);
+
+        return res.status(200).json({ success: true, message: 'Password updated successfully' });
 
     } catch (error) {
         console.error('Internal server error:', error.message);

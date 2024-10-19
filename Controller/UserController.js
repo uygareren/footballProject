@@ -203,7 +203,6 @@ exports.PostBlockUser = async (req, res) => {
     }
 };
 
-
 exports.PostUnBlockUser = async (req, res) => {
     const userId = req.accountID;
     const { targetUserId } = req.body;
@@ -249,7 +248,6 @@ exports.GetBlockedUsers = async(req, res) => {
     }
 }
 
-// NOT DONE
 exports.GetUserDetail = async (req, res) => {
     const userId = req.accountID;
     const { targetUserId } = req.body;
@@ -309,6 +307,7 @@ exports.GetUserDetail = async (req, res) => {
         return res.status(500).json({ success: false, message: 'Internal server error.' });
     }
 };
+
 
 
 
