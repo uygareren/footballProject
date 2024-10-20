@@ -59,66 +59,89 @@ exports.Register = async (req, res) => {
 };
 
 exports.VerifyRegisterCode = async(req, res) => {
-    const {userId, code} = req.body;
+    const {email, code} = req.body;
 
     try {
+        const findUserQuery = `
+            SELECT id FROM user WHERE email = ? LIMIT 1;
+        `;
+        const userResult = await db.mysqlQuery(findUserQuery, [email]);
+
+        if (!userResult.length) {
+            return res.status(400).json({ success: false, message: "Böyle bir email'e sahip kullanıcı bulunamadı!" });
+        }
+
+        const userId = userResult[0].id;
 
         const verifyCodeQuery = `
             SELECT code FROM register_codes
-                WHERE userId = ?
-                LIMIT 1
+            WHERE userId = ?
+            LIMIT 1;
         `;
 
         const verifyResult = await db.mysqlQuery(verifyCodeQuery, [userId]);
-        if(!verifyResult[0].code){
-            return res.status(400).json({success:false, message:"Böyle bir kullanıcıya ait kod yok!"})
+
+        if (!verifyResult.length || !verifyResult[0].code) {
+            return res.status(400).json({ success: false, message: "Böyle bir kullanıcıya ait kod yok!" });
         }
 
-        if(verifyResult[0].code == code){
+        if (verifyResult[0].code == code) {
             const updateUserActiveQuery = `
                 UPDATE user SET activeAccount = 1 WHERE id = ? LIMIT 1;
-            `
-            await db.mysqlQuery(updateUserActiveQuery, [userId])
+            `;
+            await db.mysqlQuery(updateUserActiveQuery, [userId]);
 
-            const deleteVeriyCodeQuery = `
+            const deleteVerifyCodeQuery = `
                 DELETE FROM register_codes
                 WHERE code = ? AND userId = ?
-                LIMIT 1
-            `
-            await db.mysqlQuery(deleteVeriyCodeQuery, [code, userId])
-            return res.status(200).json({success:true, message:"Kod Doğrulandı!"})
-        }else{
-            return res.status(400).json({success:false, message:"Kod Doğrulanamadı!"})
+                LIMIT 1;
+            `;
+            await db.mysqlQuery(deleteVerifyCodeQuery, [code, userId]);
 
+            return res.status(200).json({ success: true, message: "Kod Doğrulandı!" });
+        } else {
+            return res.status(400).json({ success: false, message: "Kod Doğrulanamadı!" });
         }
 
     } catch (error) {
         console.error("Login error:", error);
         return res.status(500).json({ success: false, message: "Sunucu hatası. Tekrar deneyin." });
     }
-}
+};
 
-exports.ResendVeriyRegisterCode = async (req, res) => {
-    const { userId } = req.body;
+
+exports.ResendVerifyRegisterCode = async (req, res) => {
+    const { email } = req.body;
 
     try {
+        const findUserQuery = `
+            SELECT id FROM user WHERE email = ? LIMIT 1;
+        `;
+        const userResult = await db.mysqlQuery(findUserQuery, [email]);
+
+        if (!userResult.length) {
+            return res.status(400).json({ success: false, message: "Böyle bir email'e sahip kullanıcı bulunamadı!" });
+        }
+
+        const userId = userResult[0].id;
+
         const code = Math.floor(100000 + Math.random() * 900000).toString();
 
-         // Tek sorguda önce silip sonra ekleme işlemi
-         const verifyCodeQuery = `
-         DELETE FROM register_codes WHERE userId = ?;
-         INSERT INTO register_codes (userId, code) VALUES (?, ?);
-     `;
+        const verifyCodeQuery = `
+            DELETE FROM register_codes WHERE userId = ?;
+            INSERT INTO register_codes (userId, code) VALUES (?, ?);
+        `;
 
-     await db.mysqlQuery(verifyCodeQuery, [userId, userId, code]);
+        await db.mysqlQuery(verifyCodeQuery, [userId, userId, code]);
 
-        return res.status(200).json({ success: true, message: "Yeni kod gönderildi!" });
+        return res.status(200).json({ success: true, message: "Yeni kod gönderildi!", code });
 
     } catch (error) {
         console.error("Resend Verify Register Code error:", error);
         return res.status(500).json({ success: false, message: "Sunucu hatası. Tekrar deneyin." });
     }
 };
+
 
 exports.ForgetPasswordEmailVerification = async(req, res) => {
     const {email} = req.body;

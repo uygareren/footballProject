@@ -16,14 +16,14 @@ const registerValidation = {
 
 const registerVerifyValidation = {
     body: Joi.object({
-        userId: Joi.number().required(),
+        email: Joi.string().required(),
         code: Joi.number().required(),
     }),
 };
 
 const registerResendVerifyValidation = {
     body: Joi.object({
-        userId: Joi.number().required(),
+        email: Joi.string().required(),
     }),
 };
 
@@ -65,7 +65,7 @@ const router = express.Router();
 
 router.post('/register', validate(registerValidation), AuthController.Register);
 router.post('/register-verify', validate(registerVerifyValidation), AuthController.VerifyRegisterCode);
-router.post('/register-resend-verify', validate(registerResendVerifyValidation), AuthController.ResendVeriyRegisterCode);
+router.post('/register-resend-verify', validate(registerResendVerifyValidation), AuthController.ResendVerifyRegisterCode);
 
 router.post('/login', validate(loginValidation), AuthController.Login);
 router.post('/login-with-token', AuthController.loginWithToken);
