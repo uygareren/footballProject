@@ -310,8 +310,6 @@ exports.Login = async(req, res) => {
 
         await db.mysqlQuery(updateQuery, [authToken, user.id]); 
 
-        console.log("authtoknetype", typeof authToken)
-
         const jwt = createToken(authToken);
         res.status(200).json({ success: true, jwt });
 
