@@ -250,7 +250,7 @@ exports.GetBlockedUsers = async(req, res) => {
 
 exports.GetUserDetail = async (req, res) => {
     const userId = req.accountID;
-    const { targetUserId } = req.body;
+    const { targetUserId } = req.params;
 
     try {
         const userDetailQuery = `
