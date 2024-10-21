@@ -12,7 +12,7 @@ app.use("/api/v1/auth", authRouter);
 app.use("/api/v1/user", userRouter);
 
 app.get("/", (req, res) => {
-  res.send("Running 2!");
+  res.send("Running 33!");
 });
 
 const PORT = 3000;
